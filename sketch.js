@@ -3,10 +3,27 @@ var cell_height= 8;
 
 var cells;
 
-function Cell(x_position, y_position, is_on){
-	this.x_position = x_position;
-	this.y_position = y_position;
+function Cell(i, j, is_on){
+	this.x_position = i*cell_width;
+	this.y_position = j*cell_height;
 	this.is_on = is_on;
+	this.adjacentcellstates = [false,false,false,false,false,false,false,false];	
+}
+
+Cell.getNeighborStates = function(i, j){
+	for(k = 0; k < 8; k++){
+		try{
+			cell = cells[i+((Math.Floor(k/3))-1)][j+((k%3)-1)];
+			this.adjacentcellstates[k] = cell.is_on;
+		}catch(ex){
+			this.adjacentcellstates[k] = false;
+			continue;
+		}
+	}
+}
+
+Cell.update = function(rule_number){
+	this.is_on = rule(rule_number, this.adjacentcellstates);
 }
 
 function initializeCells(rows,cols){
@@ -14,7 +31,7 @@ function initializeCells(rows,cols){
 	for(i = 0; i < rows;i++){
 		arr.push([]);
 		for(j = 0; j < cols;j++){
-			var cell = new Cell(i*cell_width, j*cell_height, false)
+			var cell = new Cell(i,j, false)
 			arr[i].push(cell);
 		}
 	}
@@ -22,24 +39,32 @@ function initializeCells(rows,cols){
 	return arr;
 }
 
-function setup() {
-	createCanvas(windowWidth,windowHeight);
-	background(12,12,12);
-	cells = initializeCells(width / cell_width, height / cell_height);
-	/*
-	for(i = 0; i < windowWidth / cell_width; i++){
-		for(j = 0; j < windowHeight / cell_height;j++){
-			var cell = new Cell(i*4,j*4, false);
-			cells[i][j] = cell;
+function rule(rule_number, adjacentcellstates){
+	var count = 0;
+	for (x in adjacentcellstates){
+		if(x == true){
+			count = count + 1;
 		}
 	}
-	*/
+	if (count >= 4){
+		return true;
+	}
+	else{
+		return false;
+	}
+}
+
+function setup() {
+	createCanvas(windowWidth,windowHeight);
+	cells = initializeCells(width / cell_width, height / cell_height);
 }
 
 function draw() {
 	//strokeWeight(random(1,6));
 	//point(random(0,width), random(0, height));
+	background(12,12,12);
 	noStroke();
+	/*
 	for(i = 0; i < windowWidth / cell_width;i++){
 		for(j = 0; j < windowHeight / cell_height; j++){
 			fill(random(0,255),0,random(0,255));
@@ -48,4 +73,20 @@ function draw() {
 			}
 		}
 	}
+	*/
+	fill(255,255,255)
+	for(i = 0; i < windowWidth / cell_width;i++){
+		for(j = 0; j < windowHeight / cell_height;j++){
+			cells[i][j].getNeighborStates(i,j);
+		}
+	}
+	for(i = 0; i < windowWidth / cell_width;i++){
+		for(j = 0; j < windowHeight / cell_height;j++){
+			cells[i][j].update(12);
+			if(cells[i][j].is_on == true){
+				rect(cells[i][j].x_position,cells[i][j].y_position, cell_width,cell_height);
+			}
+		}
+	}
+	
 }
