@@ -10,19 +10,22 @@ function Cell(i, j, is_on){
 	this.adjacentcellstates = [false,false,false,false,false,false,false,false];	
 }
 
-Cell.getNeighborStates = function(i, j){
+Cell.prototype.getNeighborStates = function(i, j){
 	for(k = 0; k < 8; k++){
-		try{
-			cell = cells[i+((Math.Floor(k/3))-1)][j+((k%3)-1)];
-			this.adjacentcellstates[k] = cell.is_on;
-		}catch(ex){
+		var x_index = i + ((floor(k/3)) - 1);
+		var y_index = j + ((k%3) - 1);
+		
+		if(x_index < 0 || x_index >= (width / cell_width) || y_index < 0 || y_index >= (height / cell_height))
 			this.adjacentcellstates[k] = false;
-			continue;
+		else{
+			cell = cells[x_index][y_index];
+			this.adjacentcellstates[k] = cell.is_on;
 		}
 	}
+	return;
 }
 
-Cell.update = function(rule_number){
+Cell.prototype.update = function(rule_number){
 	this.is_on = rule(rule_number, this.adjacentcellstates);
 }
 
@@ -46,7 +49,7 @@ function rule(rule_number, adjacentcellstates){
 			count = count + 1;
 		}
 	}
-	if (count >= 4){
+	if (count == 1){
 		return true;
 	}
 	else{
@@ -57,6 +60,7 @@ function rule(rule_number, adjacentcellstates){
 function setup() {
 	createCanvas(windowWidth,windowHeight);
 	cells = initializeCells(width / cell_width, height / cell_height);
+	cells[50][50].is_on = true;
 }
 
 function draw() {
@@ -89,4 +93,6 @@ function draw() {
 		}
 	}
 	
+	//rect(cells[50][50].x_position,cells[50][50].y_position, cell_width,cell_height);
+
 }
