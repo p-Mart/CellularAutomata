@@ -1,6 +1,6 @@
 //Globals / constants
-var cell_width = 12;
-var cell_height= 12;
+var cell_width = 8;
+var cell_height= 8;
 
 var cells;
 
@@ -15,7 +15,7 @@ function Cell(i, j, is_on){
 	this.x_position = i*cell_width;
 	this.y_position = j*cell_height;
 	this.is_on = is_on;
-	this.adjacentcellstates = [false,false,false,false, false, false,false,false,false];
+	this.adjacentcellstates = [false,false,false,false,false,false,false,false,false];
 	this.sumstates = 0;	
 }
 
@@ -53,8 +53,8 @@ Cell.prototype.getNeighborStates = function(i, j){
 	return;
 }
 
-Cell.prototype.update = function(){
-	this.is_on = rule(this.adjacentcellstates, this.sumstates);
+Cell.prototype.update = function(rule_number){
+	this.is_on = rule(rule_number, this.adjacentcellstates, this.sumstates);
 }
 
 function initializeCells(rows,cols){
@@ -70,51 +70,59 @@ function initializeCells(rows,cols){
 	return arr;
 }
 
-function rule(adjacentcellstates, sumstates){
+function rule(rule_number, adjacentcellstates, sumstates){
 	var count = sumstates;
-	if (adjacentcellstates[4] == true && count < 2){
-		return false;
+	current_state = adjacentcellstates[4];
+	switch(rule_number){
+		case 0:
+			if (current_state == true && count < 2){
+				return false;
+			}
+			else if (current_state == true && (count == 2 || count == 3)){
+				return true;
+			}
+			else if (current_state == true && count > 3){
+				return false;
+			}
+			else if (current_state == false && count == 3){
+				return true;
+			}else{
+				return false;
+			}
+			break;
+
+		case 1:
+			if(current_state == true && count > 3){
+				return false;
+			}
+			else if (current_state == true && count <= 1){
+				return false;
+			}
+			else if (current_state == true && count == 2){
+				return true;
+			}
+			else if (current_state == false && count == 2){
+				return true;
+			}
+			break;
+
+		default:
+			break;
 	}
-	else if (adjacentcellstates[4] == true && (count == 2 || count == 3)){
-		return true;
-	}
-	else if (adjacentcellstates[4] == true && count > 3){
-		return false;
-	}
-	else if (adjacentcellstates[4] == false && count == 3){
-		return true;
-	}else{
-		return false;
-	}
+	return false;
 }
 
 function setup() {
 	createCanvas(windowWidth,windowHeight);
 	cells = initializeCells(width / cell_width, height / cell_height);
-	cells[50][50].is_on = true;
-	cells[51][50].is_on = true;
-	cells[49][50].is_on = true;
-	cells[51][49].is_on = true;
-	cells[50][48].is_on = true;
+
 	textSize(10);
 	textAlign(CENTER);
-	frameRate(15);
-	/*
-	for(i = 0; i < width / cell_width;i++){
-		for(j = 0; j < height / cell_height;j++){
-			cells[i][j].getNeighborStates(i,j);
-		}
-	}
-	
-
-	for(i = 0; i < width / cell_width;i++){
-		for(j = 0; j < height / cell_height;j++){
-			cells[i][j].update();
-		}
-	}
-	*/
-
+	frameRate(20);
 }
+
+//Rule number for cell automata update.
+rule_number = 1;
 
 function draw() {
 
@@ -151,13 +159,9 @@ function draw() {
 		for(j = 0; j < height / cell_height;j++){
 
 			if(paused == false){
-				cells[i][j].update();
+				cells[i][j].update(rule_number);
 			}
-			if(cells[i][j].is_on == false && grid_on == true){
-				stroke(255);
-				noFill();
-				rect(cells[i][j].x_position,cells[i][j].y_position, cell_width,cell_height);
-			}
+		
 			if(cells[i][j].is_on == true){
 				noStroke();
 				fill(255,255,255);
@@ -167,6 +171,18 @@ function draw() {
 			//text(str(cells[i][j].sumstates),cells[i][j].x_position,cells[i][j].y_position,cell_width,cell_height);
 		}
 	}
+
+	//Draw grid.
+	if(grid_on == true){
+		stroke(0,55,0);
+		for(i = 0; i < width / cell_width;i++){
+			line(i*cell_width, 0, i*cell_width, height);
+		}
+		for(i = 0; i < height / cell_height;i++){
+			line(0, i*cell_height, width, i*cell_height);
+		}
+	}
+
 } 
 
 
