@@ -4,10 +4,16 @@ var cell_height= 8;
 
 var cells;
 
+//Memes
+var pause_button;
+var grid_button;
+var drawing_button;
+//var hide_button;
+
 //Control Variables
 var paused = false;
 var reset = false;
-var drawing = false;
+var pressed = false;
 var draw_mode = false;
 var grid_on = false;
 
@@ -90,7 +96,6 @@ function rule(rule_number, adjacentcellstates, sumstates){
 				return false;
 			}
 			break;
-
 		case 1:
 			if(current_state == true && count > 3){
 				return false;
@@ -112,6 +117,97 @@ function rule(rule_number, adjacentcellstates, sumstates){
 	return false;
 }
 
+function Button(x, y, size, control){
+	this.x = x;
+	this.y = y;
+	this.size = size;
+	this.control = control;
+}
+Button.prototype.update = function(){
+	if(pow(mouseX - this.x,2) + pow(mouseY - this.y,2) <= pow(this.size,2)){
+			this.control = !this.control;
+	}
+}
+
+Button.prototype.draw = function(icon_draw){
+	push();
+		noStroke();
+		fill(211,211,211);
+		ellipse(this.x,this.y, this.size);
+	pop();
+	icon_draw(this.x, this.y, this.size,this.control);
+}
+
+function pause_icon(p_x,p_y,p_size,control){
+	push();
+		noStroke();
+		fill(144,144,144);
+		if(control === false){
+			rect(p_x+2,p_y-p_size/4,p_size/5,p_size/2);
+			rect(p_x-2 - p_size/5,p_y-p_size/4,p_size/5,p_size/2);
+		}else{
+			//var x1 = p_x-2 - p_size/5;
+			var x3 = p_x+ p_size/5;
+			var x2 = p_x - 2 - p_size/10;
+			var y1 = p_y - p_size/4;
+			var y2 = p_y;
+			var y3 = p_y + p_size/4;
+			triangle(x2,y1,x3,y2,x2,y3);
+		}
+	pop();
+}
+function grid_icon(p_x,p_y,p_size,control){
+	push();
+		strokeWeight(2);
+		if(control === false){
+			stroke(144,144,144);
+		}else{
+			stroke(0,55,0);
+		}
+		var x1 = p_x-2 - p_size/5;
+		var x2 = p_x+2+ p_size/5;
+		var x3 = p_x;
+		var y1 = p_y - p_size/5;
+		var y2 = p_y;
+		var y3 = p_y + p_size/5;
+
+		line(x1,y1,x2,y1);
+		line(x1,y2,x2,y2);
+		line(x1,y3,x2,y3);
+
+		line(x1,y1,x1,y3);
+		line(x2,y1,x2,y3);
+		line(x3,y1,x3,y3);
+	pop();
+}
+function drawing_icon(p_x,p_y,p_size,control){
+	push();
+		noStroke();
+		if(control == false){
+			fill(255,255,255);
+		}else{
+			fill(12,12,12);
+		}
+		ellipse(p_x,p_y,p_size/2);
+	pop();
+}
+function hide_icon(p_x,p_y,p_size,control){
+	push();
+		strokeWeight(4);
+		stroke(144,144,144);
+
+		var x1 = p_x-2 - p_size/5;
+		var x2= p_x;
+		var x3 = p_x+2+ p_size/5;
+		var y1 = p_y;
+		var y2 = p_y + p_size/5;
+
+		line(x1,y1,x2,y2);
+		line(x2,y2,x3,y1);
+
+	pop();
+}
+
 function setup() {
 	createCanvas(windowWidth,windowHeight);
 	cells = initializeCells(width / cell_width, height / cell_height);
@@ -119,10 +215,14 @@ function setup() {
 	textSize(10);
 	textAlign(CENTER);
 	frameRate(20);
+
+	pause_button = new Button(width / 2, height - 48, 48, paused);
+	drawing_button = new Button(3*width / 8, height - 48, 48,draw_mode);
+	grid_button = new Button(5*width / 8, height - 48, 48,grid_on);
+	//hide_button = new Button(width - 48, height - 48, 48,true);
 }
 
-//Rule number for cell automata update.
-rule_number = 1;
+rule_number = 0;
 
 function draw() {
 
@@ -130,23 +230,22 @@ function draw() {
 	noStroke();
 	fill(255,255,255);
 
+
 	//Draw Modes
-	if (drawing == true && draw_mode == false){
+	if (pressed == true && drawing_button.control === false){
 		cells[floor(mouseX/cell_width)][floor(mouseY/cell_height)].is_on = true;
 	}
-	else if (drawing == true && draw_mode == true){
+	else if (pressed == true && drawing_button.control === true){
 		cells[floor(mouseX/cell_width)][floor(mouseY/cell_height)].is_on = false;
 	}
 
-	//Reset the environment.
 	if(reset == true){
 		background(12,12,12);
 		cells = initializeCells(width / cell_width, height / cell_height);
 		reset = false;
 	}
 
-	//Update the neighboring states of each cell if environment is unpaused.
-	if(paused == false){
+	if(pause_button.control == false){
 		for(i = 0; i < width / cell_width;i++){
 			for(j = 0; j < height / cell_height;j++){
 				cells[i][j].getNeighborStates(i,j);
@@ -154,11 +253,10 @@ function draw() {
 		}
 	}
 
-	//Update and Draw. Drawing happens regardless of whether environment is paused.
 	for(i = 0; i < width / cell_width;i++){
 		for(j = 0; j < height / cell_height;j++){
 
-			if(paused == false){
+			if(pause_button.control== false){
 				cells[i][j].update(rule_number);
 			}
 		
@@ -167,13 +265,10 @@ function draw() {
 				fill(255,255,255);
 				rect(cells[i][j].x_position,cells[i][j].y_position, cell_width,cell_height);
 			} 
-			//fill(255,0,0);
-			//text(str(cells[i][j].sumstates),cells[i][j].x_position,cells[i][j].y_position,cell_width,cell_height);
 		}
 	}
 
-	//Draw grid.
-	if(grid_on == true){
+	if(grid_button.control == true){
 		stroke(0,55,0);
 		for(i = 0; i < width / cell_width;i++){
 			line(i*cell_width, 0, i*cell_width, height);
@@ -183,11 +278,15 @@ function draw() {
 		}
 	}
 
+	pause_button.draw(pause_icon);
+	grid_button.draw(grid_icon);
+	drawing_button.draw(drawing_icon);
+	//hide_button.draw(hide_icon);
+
 } 
 
 
 function keyPressed(){
-	//Spacebar
 	if (keyCode == 32){
 		paused = !paused;
 	}
@@ -205,14 +304,17 @@ function keyPressed(){
 
 function mousePressed(){
 	if (mouseButton == LEFT){
-		drawing = true;
+		pressed = true;
+		pause_button.update();
+		grid_button.update();
+		drawing_button.update();
 	}
 	return false;
 }
 
 function mouseReleased(){
 	if (mouseButton == LEFT){
-		drawing = false;
+		pressed = false;
 	}
 	return false;
 }
