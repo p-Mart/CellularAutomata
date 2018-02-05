@@ -4,317 +4,275 @@ var cell_height= 8;
 
 var cells;
 
-//Memes
-var pause_button;
-var grid_button;
-var drawing_button;
-//var hide_button;
-
 //Control Variables
-var paused = false;
+var paused = true; //Initially paused
 var reset = false;
 var pressed = false;
-var draw_mode = false;
+var draw_mode = true;
 var grid_on = false;
 
+// Control buttons
+var pause_btn;
+var grid_btn;
+var draw_btn;
+var clear_btn;
+
+// Button Listeners
+
+// Pause button
+function pause(){
+    // Change inner glyphicon
+    pause_icon = document.getElementById("pause-icon");
+    if (!paused){
+        pause_icon.className = "glyphicon glyphicon-play";
+    } else {
+        pause_icon.className = "glyphicon glyphicon-pause";
+    }
+
+    // Toggle paused state
+    paused = !paused;
+}
+
+// Grid button
+function grid(){
+    grid_on = !grid_on;
+}
+
+// Draw button
+function drawMode(){
+    // Change inner glyphicon
+    draw_icon = document.getElementById("draw-icon");
+    if (!draw_mode){
+        draw_icon.className = "glyphicon glyphicon-leaf";
+    } else {
+        draw_icon.className = "glyphicon glyphicon-fire";
+    }
+
+    // Toggle draw state
+    draw_mode = !draw_mode;
+}
+
+// Clear button
+function clearScreen(){
+    reset = true;
+}
+
+
+
+
 function Cell(i, j, is_on){
-	this.x_position = i*cell_width;
-	this.y_position = j*cell_height;
-	this.is_on = is_on;
-	this.adjacentcellstates = [false,false,false,false,false,false,false,false,false];
-	this.sumstates = 0;	
+    this.x_position = i*cell_width;
+    this.y_position = j*cell_height;
+    this.is_on = is_on;
+    this.adjacentcellstates = [false,false,false,false,false,false,false,false,false];
+    this.sumstates = 0; 
 }
 
 Cell.prototype.getNeighborStates = function(i, j){
-	for(k = 0; k < 9; k++){
-		var x_index = i + ((k%3) - 1);
-		var y_index = j + (floor(k/3)) - 1;
-		
-		//The state of the cell being operated on
-		if(k == 4){
-			this.adjacentcellstates[k] = this.is_on;
-			continue;
-		}
-		
-		//The states of the cells adjacent to the cell being operated on
-		if(x_index < 0 || x_index >= (width / cell_width) || y_index < 0 || y_index >= (height / cell_height))
-			this.adjacentcellstates[k] = false;
-		else{
-			cell = cells[x_index][y_index];
-			this.adjacentcellstates[k] = cell.is_on;
-		}
-	}
+    for(k = 0; k < 9; k++){
+        var x_index = i + ((k%3) - 1);
+        var y_index = j + (floor(k/3)) - 1;
+        
+        //The state of the cell being operated on
+        if(k == 4){
+            this.adjacentcellstates[k] = this.is_on;
+            continue;
+        }
+        
+        //The states of the cells adjacent to the cell being operated on
+        if(x_index < 0 || x_index >= (width / cell_width) || y_index < 0 || y_index >= (height / cell_height))
+            this.adjacentcellstates[k] = false;
+        else{
+            cell = cells[x_index][y_index];
+            this.adjacentcellstates[k] = cell.is_on;
+        }
+    }
 
-	var count = 0;
-	for(i = 0; i < 9; i++){
-		if (i == 4){
-			continue;
-		}
-		if(this.adjacentcellstates[i] == true){
-			count = count + 1;
-		}
-	}
-	this.sumstates = count;
+    var count = 0;
+    for(i = 0; i < 9; i++){
+        if (i == 4){
+            continue;
+        }
+        if(this.adjacentcellstates[i] == true){
+            count = count + 1;
+        }
+    }
+    this.sumstates = count;
 
-	return;
+    return;
 }
 
 Cell.prototype.update = function(rule_number){
-	this.is_on = rule(rule_number, this.adjacentcellstates, this.sumstates);
+    this.is_on = rule(rule_number, this.adjacentcellstates, this.sumstates);
 }
 
 function initializeCells(rows,cols){
-	var arr = [];
-	for(i = 0; i < rows;i++){
-		arr.push([]);
-		for(j = 0; j < cols;j++){
-			var cell = new Cell(i,j, false)
-			arr[i].push(cell);
-		}
-	}
+    var arr = [];
+    for(i = 0; i < rows;i++){
+        arr.push([]);
+        for(j = 0; j < cols;j++){
+            var cell = new Cell(i,j, false)
+            arr[i].push(cell);
+        }
+    }
 
-	return arr;
+    return arr;
 }
 
 function rule(rule_number, adjacentcellstates, sumstates){
-	var count = sumstates;
-	current_state = adjacentcellstates[4];
-	switch(rule_number){
-		case 0:
-			if (current_state == true && count < 2){
-				return false;
-			}
-			else if (current_state == true && (count == 2 || count == 3)){
-				return true;
-			}
-			else if (current_state == true && count > 3){
-				return false;
-			}
-			else if (current_state == false && count == 3){
-				return true;
-			}else{
-				return false;
-			}
-			break;
-		case 1:
-			if(current_state == true && count > 3){
-				return false;
-			}
-			else if (current_state == true && count <= 1){
-				return false;
-			}
-			else if (current_state == true && count == 2){
-				return true;
-			}
-			else if (current_state == false && count == 2){
-				return true;
-			}
-			break;
+    var count = sumstates;
+    current_state = adjacentcellstates[4];
+    switch(rule_number){
+        case 0:
+            if (current_state == true && count < 2){
+                return false;
+            }
+            else if (current_state == true && (count == 2 || count == 3)){
+                return true;
+            }
+            else if (current_state == true && count > 3){
+                return false;
+            }
+            else if (current_state == false && count == 3){
+                return true;
+            }else{
+                return false;
+            }
+            break;
+        case 1:
+            if(current_state == true && count > 3){
+                return false;
+            }
+            else if (current_state == true && count <= 1){
+                return false;
+            }
+            else if (current_state == true && count == 2){
+                return true;
+            }
+            else if (current_state == false && count == 2){
+                return true;
+            }
+            break;
 
-		default:
-			break;
-	}
-	return false;
-}
-
-function Button(x, y, size, control){
-	this.x = x;
-	this.y = y;
-	this.size = size;
-	this.control = control;
-}
-Button.prototype.update = function(){
-	if(pow(mouseX - this.x,2) + pow(mouseY - this.y,2) <= pow(this.size,2)){
-			this.control = !this.control;
-	}
-}
-
-Button.prototype.draw = function(icon_draw){
-	push();
-		noStroke();
-		fill(211,211,211);
-		ellipse(this.x,this.y, this.size);
-	pop();
-	icon_draw(this.x, this.y, this.size,this.control);
-}
-
-function pause_icon(p_x,p_y,p_size,control){
-	push();
-		noStroke();
-		fill(144,144,144);
-		if(control === false){
-			rect(p_x+2,p_y-p_size/4,p_size/5,p_size/2);
-			rect(p_x-2 - p_size/5,p_y-p_size/4,p_size/5,p_size/2);
-		}else{
-			//var x1 = p_x-2 - p_size/5;
-			var x3 = p_x+ p_size/5;
-			var x2 = p_x - 2 - p_size/10;
-			var y1 = p_y - p_size/4;
-			var y2 = p_y;
-			var y3 = p_y + p_size/4;
-			triangle(x2,y1,x3,y2,x2,y3);
-		}
-	pop();
-}
-function grid_icon(p_x,p_y,p_size,control){
-	push();
-		strokeWeight(2);
-		if(control === false){
-			stroke(144,144,144);
-		}else{
-			stroke(0,55,0);
-		}
-		var x1 = p_x-2 - p_size/5;
-		var x2 = p_x+2+ p_size/5;
-		var x3 = p_x;
-		var y1 = p_y - p_size/5;
-		var y2 = p_y;
-		var y3 = p_y + p_size/5;
-
-		line(x1,y1,x2,y1);
-		line(x1,y2,x2,y2);
-		line(x1,y3,x2,y3);
-
-		line(x1,y1,x1,y3);
-		line(x2,y1,x2,y3);
-		line(x3,y1,x3,y3);
-	pop();
-}
-function drawing_icon(p_x,p_y,p_size,control){
-	push();
-		noStroke();
-		if(control == false){
-			fill(255,255,255);
-		}else{
-			fill(12,12,12);
-		}
-		ellipse(p_x,p_y,p_size/2);
-	pop();
-}
-function hide_icon(p_x,p_y,p_size,control){
-	push();
-		strokeWeight(4);
-		stroke(144,144,144);
-
-		var x1 = p_x-2 - p_size/5;
-		var x2= p_x;
-		var x3 = p_x+2+ p_size/5;
-		var y1 = p_y;
-		var y2 = p_y + p_size/5;
-
-		line(x1,y1,x2,y2);
-		line(x2,y2,x3,y1);
-
-	pop();
+        default:
+            break;
+    }
+    return false;
 }
 
 function setup() {
-	createCanvas(windowWidth,windowHeight);
-	cells = initializeCells(width / cell_width, height / cell_height);
+    createCanvas(windowWidth,windowHeight);
+    cells = initializeCells(width / cell_width, height / cell_height);
 
-	textSize(10);
-	textAlign(CENTER);
-	frameRate(20);
+    textSize(10);
+    textAlign(CENTER);
+    frameRate(30);
 
-	pause_button = new Button(width / 2, height - 48, 48, paused);
-	drawing_button = new Button(3*width / 8, height - 48, 48,draw_mode);
-	grid_button = new Button(5*width / 8, height - 48, 48,grid_on);
-	//hide_button = new Button(width - 48, height - 48, 48,true);
+    pause_btn = document.getElementById("pause-btn"); 
+    grid_btn = document.getElementById("grid-btn");
+    draw_btn = document.getElementById("draw-btn");
+    clear_btn = document.getElementById("clear-btn");
+
+    pause_btn.onclick = pause;
+    grid_btn.onclick = grid;
+    draw_btn.onclick = drawMode;
+    clear_btn.onclick = clearScreen;
 }
 
 rule_number = 0;
 
 function draw() {
 
-	background(12,12,12);
-	noStroke();
-	fill(255,255,255);
+    // Draw background.
+    background(12,12,12);
+    noStroke();
 
+    fill(255,255,255);
 
-	//Draw Modes
-	if (pressed == true && drawing_button.control === false){
-		cells[floor(mouseX/cell_width)][floor(mouseY/cell_height)].is_on = true;
-	}
-	else if (pressed == true && drawing_button.control === true){
-		cells[floor(mouseX/cell_width)][floor(mouseY/cell_height)].is_on = false;
-	}
+    // Turn cells on or off if mouse is pressed, based on drawing mode.
+    if (mouseIsPressed && draw_mode){
+        cells[floor(mouseX/cell_width)][floor(mouseY/cell_height)].is_on = true;
+    }
+    else if (mouseIsPressed && !draw_mode){
+        cells[floor(mouseX/cell_width)][floor(mouseY/cell_height)].is_on = false;
+    }
 
-	if(reset == true){
-		background(12,12,12);
-		cells = initializeCells(width / cell_width, height / cell_height);
-		reset = false;
-	}
+    // Reset all cells to off.
+    if(reset){
+        background(12,12,12);
+        cells = initializeCells(width / cell_width, height / cell_height);
+        reset = false;
+    }
 
-	if(pause_button.control == false){
-		for(i = 0; i < width / cell_width;i++){
-			for(j = 0; j < height / cell_height;j++){
-				cells[i][j].getNeighborStates(i,j);
-			}
-		}
-	}
+    // Update neighbor states for each cell
+    if(!paused){
+        for(i = 0; i < width / cell_width;i++){
+            for(j = 0; j < height / cell_height;j++){
+                cells[i][j].getNeighborStates(i,j);
+            }
+        }
+    }
 
-	for(i = 0; i < width / cell_width;i++){
-		for(j = 0; j < height / cell_height;j++){
+    // Update and draw all cells on screen
+    for(i = 0; i < width / cell_width;i++){
+        for(j = 0; j < height / cell_height;j++){
 
-			if(pause_button.control== false){
-				cells[i][j].update(rule_number);
-			}
-		
-			if(cells[i][j].is_on == true){
-				noStroke();
-				fill(255,255,255);
-				rect(cells[i][j].x_position,cells[i][j].y_position, cell_width,cell_height);
-			} 
-		}
-	}
+            if(!paused){
+                cells[i][j].update(rule_number);
+            }
+        
+            if(cells[i][j].is_on){
+                noStroke();
+                fill(255,255,255);
+                rect(cells[i][j].x_position,cells[i][j].y_position, cell_width,cell_height);
+            } 
+        }
+    }
 
-	if(grid_button.control == true){
-		stroke(0,55,0);
-		for(i = 0; i < width / cell_width;i++){
-			line(i*cell_width, 0, i*cell_width, height);
-		}
-		for(i = 0; i < height / cell_height;i++){
-			line(0, i*cell_height, width, i*cell_height);
-		}
-	}
+    // Render grid if toggled
+    if(grid_on){
+        stroke(0,55,0);
+        for(i = 0; i < width / cell_width;i++){
+            line(i*cell_width, 0, i*cell_width, height);
+        }
+        for(i = 0; i < height / cell_height;i++){
+            line(0, i*cell_height, width, i*cell_height);
+        }
+    }
 
-	pause_button.draw(pause_icon);
-	grid_button.draw(grid_icon);
-	drawing_button.draw(drawing_icon);
-	//hide_button.draw(hide_icon);
+    // Draw white square around the cell the mouse is hovering over
+    noFill();
+    stroke(255, 255, 255);
+    rect(floor(mouseX/cell_width) * cell_width, floor(mouseY/cell_height) * cell_height, cell_width, cell_height);
 
-} 
+    // Text when game starts
+    if (frameCount < frameRate() * 5){
+        fill(255, 255, 255);
+        noStroke();
+        textAlign(CENTER);
 
+        textSize(48);
+        text("Conway's Game of Life", width / 2, 48)
+
+        textSize(32);
+        text("Click to draw. Press play to run the simulation.", width / 2, 128)
+    }
+
+}  
 
 function keyPressed(){
-	if (keyCode == 32){
-		paused = !paused;
-	}
-	else if(key == "R"){
-		reset = true;
-	}
-	else if(key == "E"){
-		draw_mode = !draw_mode;
-	}
-	else if(key == "G"){
-		grid_on = !grid_on;
-	}
-	return false;
+    if (keyCode == 32){
+        paused = !paused;
+    }
+    else if(key == "R"){
+        reset = true;
+    }
+    else if(key == "E"){
+        draw_mode = !draw_mode;
+    }
+    else if(key == "G"){
+        grid_on = !grid_on;
+    }
+    return false;
 }
 
-function mousePressed(){
-	if (mouseButton == LEFT){
-		pressed = true;
-		pause_button.update();
-		grid_button.update();
-		drawing_button.update();
-	}
-	return false;
-}
-
-function mouseReleased(){
-	if (mouseButton == LEFT){
-		pressed = false;
-	}
-	return false;
-}

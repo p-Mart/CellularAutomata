@@ -1,0 +1,29 @@
+body {
+    padding: 0; 
+    margin: 0;
+} 
+
+.button-container{
+    position: absolute;
+    width : 50px;
+    left : 18px;
+    top : 18px;
+}
+
+.btn:focus, .btn:active{
+    outline: none !important;
+    box-shadow: none !important;
+}
+
+.btn-circle {
+  left : 18px;
+  top: 18px;
+  width: 36px;
+  height: 36px;
+  text-align: center;
+  margin : 12px 6px;
+  padding: 6px 0;
+  font-size: 12px;
+  line-height: 1.428571429;
+  border-radius: 18px;
+}
